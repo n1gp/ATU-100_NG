@@ -1,0 +1,106 @@
+// Tuning: searches the relay setting with the lowest reflection.
+// Free of hardware access: it only talks to the hal_* functions, which the
+// firmware (app.c) or the PC simulator (tools/sim) provide.
+
+#ifndef TUNE_H
+#define TUNE_H
+
+#include <stdint.h>
+#include "meas_math.h"
+
+#define L_MAX 127                  // 7 inductor relays
+#define C_MAX 127                  // 7 capacitor relays
+
+typedef struct {
+   uint8_t l, c, sw;               // sw: 1 = capacitor on the antenna side
+} relays_t;
+
+enum {
+   TUNE_OK,                        // tuned (or already good)
+   TUNE_NO_CARRIER,                // no carrier: relays unchanged or best so far
+   TUNE_ABORTED,                   // button: relays on the best setting so far
+   TUNE_NO_MATCH,                  // nothing better than bypass, which is above SWR 1.20:
+                                   // relays in bypass
+   TUNE_OVERLOAD,                  // a detector above the ADC range at OVF_RUN_MAX settings
+                                   // in a row: relays unchanged or best so far
+   TUNE_TOO_LOW,                   // a carrier below Cell 4 at a setting below SWR 1.5:
+                                   // relays unchanged or best so far
+   TUNE_TOO_HIGH,                  // a carrier above Cell 5 (e.g. a rig with SWR protection
+                                   // near the match): relays unchanged or best so far
+};
+
+// Memory of the last good tunes. The tuner does not know the frequency; it
+// measures the remembered settings at the start of a tune instead, and the
+// best one starts a short local search. Each result goes into its own
+// slot (one near the same place is replaced, else the oldest), so the
+// firmware writes only that slot to the data EEPROM (tune_mem_dirty).
+#define MEM_SLOTS    12
+#define MEM_MAX_SWR  200           // results up to SWR 2.00 are remembered
+extern relays_t tune_mem[MEM_SLOTS];
+extern uint8_t tune_mem_swr[MEM_SLOTS];   // SWR x 100 - 100 reached then (max 255)
+extern uint8_t tune_mem_seq[MEM_SLOTS];   // age: higher (mod 256) = newer
+extern uint8_t tune_mem_n;                // slots in use (0..n-1)
+extern uint16_t tune_mem_dirty;           // bit i: slot i changed
+
+// Search state over tunes: a tune whose carrier went away while it still
+// measured new settings can be continued by the next one (tune_resume =
+// tune_resumable before tune_run): the settings measured so far are not
+// measured again and the step budget counts on, so a chain of continued
+// tunes ends like one tune. A new search starts instead when the relays
+// no longer hold the best setting so far (bypass switched meanwhile) or
+// when that setting measures clearly different now (other band, other
+// antenna). After TOO LOW / TOO HIGH only TUNE should go on with it (the
+// power changed meanwhile); an auto tune would end the same way.
+#define RESUME_ANY   1             // carrier gone: any tune may go on with the search
+#define RESUME_TUNE  2             // TOO LOW / TOO HIGH: TUNE may go on with it
+extern uint8_t tune_resume;        // not 0: the next tune_run continues the last search
+extern uint8_t tune_resumable;     // set by tune_run: 0, or how the next tune may continue
+                                   // this search (new settings were measured before the
+                                   // carrier went or got too weak, and the search is a
+                                   // continued one or found something better than 'from')
+
+// Carrier power a tune works with (uW, cfg[] from cells.h): forward power
+// from Cell 4 on, net power up to Cell 5. tune_run waits up to WAIT_START
+// for it at the start; the firmware uses the same limits and time for its
+// auto tune and its own wait before tune_run.
+#define TUNE_MIN_UW  ((uint32_t)cfg[CFG_MIN_PWR] * 100000UL)
+#define TUNE_MAX_UW  ((uint32_t)cfg[CFG_MAX_PWR] * 1000000UL)
+#define WAIT_START   1000          // x 10 ms (and a measurement each)
+// A rig with SWR protection cuts its power at a bad setting, often below
+// Cell 4. From SWR 1.5 on a forward power from FOLD_MIN_UW on is enough
+// to measure a setting: Pr / Pf stays right, and a bad setting needs no
+// precision. Below SWR 1.5 Cell 4 applies.
+#define FOLD_MIN_UW  100000        // 0.1 W
+#ifndef FOLD_G2
+#define FOLD_G2      (G2_ONE / 25) // SWR 1.5
+#endif
+// TUNE and auto tune start in that band only from SWR 1.6 on: their quick
+// measurement must not let a tune start whose finer first one is below 1.5
+#define FOLD_G2_START (FOLD_G2 / 3 * 4) // a third more reflected: SWR 1.6
+// enough power to measure: from min_uw on, or in the band above
+#define POWER_OK(m, min_uw, g2_min) \
+   ((m)->pf >= (min_uw) || ((m)->pf >= FOLD_MIN_UW && (m)->g2 >= (g2_min)))
+
+// Result of the last tune
+extern relays_t tune_best;
+extern uint32_t tune_g2;           // reflection reached, G2_ONE = none
+extern uint16_t tune_swr;          // SWR x 100 reached
+
+// Tunes. 'from' is the current relay setting. If it is the result of an
+// earlier tune, last_swr is the SWR x 100 reached then (0 = no earlier
+// result). The current setting and the memory are measured first; from
+// the best of them a local search follows, kept if it gets at most
+// QUICK_MARGIN worse than when that setting was found.
+uint8_t tune_run(const relays_t *from, uint16_t last_swr);
+
+// Provided by the firmware or the simulator
+#define hal_relay_set relays_set
+#define hal_sample    meas_take
+#define hal_wait_ms   delay_ms
+void relays_set(uint8_t l, uint8_t c, uint8_t sw);
+void meas_take(meas_t *m, uint8_t n);
+void delay_ms(uint16_t ms);
+uint8_t hal_abort(void);                     // 1 = stop tuning now
+void hal_progress(const relays_t *best, uint16_t swr);   // best setting and SWR so far, for the display (between phases)
+
+#endif
