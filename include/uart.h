@@ -21,11 +21,10 @@ extern uart_command_result_t uart_command;
 //#define ENABLE_EUSART 1
 
 #ifndef ENABLE_EUSART
-//RRK change back to A6 & A7
-#define UART_TX_LAT   LATCbits.LATC6
-#define UART_TX_TRIS  TRISCbits.TRISC6
-#define UART_RX_PORT  PORTCbits.RC7
-#define UART_RX_TRIS  TRISCbits.TRISC7
+#define UART_TX_LAT   LATAbits.LATA6
+#define UART_TX_TRIS  TRISAbits.TRISA6
+#define UART_RX_PORT  PORTAbits.RA7
+#define UART_RX_TRIS  TRISAbits.TRISA7
 
 #define BB_FIFO_SIZE 8
 #define BB_FIFO_MASK (BB_FIFO_SIZE - 1)

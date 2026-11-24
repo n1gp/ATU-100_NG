@@ -27,12 +27,9 @@ void relays_set(uint8_t l, uint8_t c, uint8_t sw) {
    LATCbits.LATC3 = (c & 0x02) ? 1 : 0;  // C2 (22 pF)
    LATAbits.LATA6 = (c & 0x04) ? 1 : 0;  // C3 (47 pF)
 #else
-   LATAbits.LATA7 = (c & 0x01) ? 1 : 0;  // C1 (10 pF)
+   LATCbits.LATC7 = (c & 0x01) ? 1 : 0;  // C1 (10 pF)
    LATCbits.LATC3 = (c & 0x02) ? 1 : 0;  // C2 (22 pF)
-   LATAbits.LATA6 = (c & 0x04) ? 1 : 0;  // C3 (47 pF)
-   //RRK change me LATCbits.LATC7 = (c & 0x01) ? 1 : 0;  // C1 (10 pF)
-   //RRK change me LATCbits.LATC3 = (c & 0x02) ? 1 : 0;  // C2 (22 pF)
-   //RRK change me LATCbits.LATC6 = (c & 0x04) ? 1 : 0;  // C3 (47 pF)
+   LATCbits.LATC6 = (c & 0x04) ? 1 : 0;  // C3 (47 pF)
 #endif
    LATCbits.LATC2 = (c & 0x08) ? 1 : 0;  // C4 (100 pF)
    LATCbits.LATC5 = (c & 0x10) ? 1 : 0;  // C5 (220 pF)

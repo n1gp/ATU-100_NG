@@ -24,15 +24,15 @@ void icom_interface_init(void) {
 
 #ifdef __16F18857
 #ifdef ENABLE_EUSART
-   ODCONCbits.ODCC7 = 1;
-   TRISCbits.TRISC6 = 1;
-   TRISCbits.TRISC7 = 0;
-#else //RRK change me
-   ODCONCbits.ODCC7 = 1;
-   TRISCbits.TRISC6 = 1;
-   TRISCbits.TRISC7 = 0;
+    ODCONCbits.ODCC7 = 1;
+    TRISCbits.TRISC6 = 1;
+    TRISCbits.TRISC7 = 0;
+#else
+    ODCONAbits.ODCA7 = 1;
+    TRISAbits.TRISA6 = 1;
+    TRISAbits.TRISA7 = 0;
 #endif
-   ICOM_KEY_OUT = 1;
+    ICOM_KEY_OUT = 1;
 #else //__16F1938
 #ifdef ENABLE_EUSART
     TRISCbits.TRISC6 = 1;

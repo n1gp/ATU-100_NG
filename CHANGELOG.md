@@ -2,6 +2,10 @@
 
 ATU-100_NG changes:
 
+2026-11-24, 1.2.3
+- A bit-bang 4800 baud UART is built by default using pins A6 and A7.
+  To build for the 115200 baud EUSART, #define ENABLE_EUSART in include/uart.h
+
 2026-11-24, 1.2.2
 - Added PIC16F18857, it supports the full 256 entry cache.
 - Changed build so both PIC16F1938 and PIC16F18857 are included.
