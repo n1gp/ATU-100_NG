@@ -1,5 +1,13 @@
 # Changelog
 
+ATU-100_NG changes:
+
+2026-11-24, 1.2.2
+- Added PIC16F18857, it supports the full 256 entry cache.
+- Changed build so both PIC16F1938 and PIC16F18857 are included.
+
+ATU-10_NG changes:
+
 What changed from version to version, the newest first. Each version is a
 tag `vX.Y.Z` in this repository; the hex file is on its release page.
 

@@ -8,7 +8,11 @@
 
 #include <stdint.h>
 
+#ifdef __16F18857
+#define CELLS_ADDR  0x7770
+#else
 #define CELLS_ADDR  0x3FF0
+#endif
 #define CELL_COUNT  14
 // 16 words reserved, the Cells fill exactly two
 // hex records (:10EEE000 and :10EEF000) that hold nothing else

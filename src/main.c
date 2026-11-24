@@ -4,7 +4,7 @@
 // the peak power for the display, updates the display a little at a time,
 // handles the button and the external interface, and runs the timers.
 
-#include "board.h"
+#include "hal.h"
 #include "icom_interface.h"
 #include "timer.h"
 #include "cells.h"
@@ -34,10 +34,9 @@
 #define CARRIER_ON_MS 200      // a carrier that comes while waiting: this long, then tune
 #define SETUP_HOLD  100        // x 10 ms held at the end of the greeting: setup menu
 
-static uint16_t t_watch, t_show, t_refresh, t_active, t_led, t_msg, t_tuned;
-static uint8_t msg_on, auto_cnt, auto_tune, low_cnt;
+static uint16_t t_watch, t_show, t_refresh, t_active, t_msg, t_tuned;
+static uint8_t msg_on, auto_cnt, auto_tune;
 enum { B_OK, B_WARN, B_LOW, B_OFF };
-static uint8_t row_lvl;        // the mildest level of the readings in the row so far
 static uint16_t swr_ref;       // SWR of the last tune, reference for auto tune
 static uint16_t shown_pwr = 0xFFFF, shown_swr = 0xFFFF;
 static meas_t peak;            // peak hold for the display
@@ -99,7 +98,7 @@ static void show_relays(const relays_t *r) {
 
    // Capacitance value
    e = fmt_num(buf, c, 0, 4); 
-    e[0] = 'p'; e[1] = 'F'; e[2] = 0;
+   e[0] = 'p'; e[1] = 'F'; e[2] = 0;
    disp_bold(11, 60, buf);
 
    // ANT / TX indicator
@@ -211,6 +210,7 @@ void hal_progress(const relays_t *best, uint16_t swr) {
    msg_on = 0;
    show_relays(best);
    show_swr(swr);
+   disp_flush();
 }
 uint8_t hal_abort(void) {
    uint8_t ev = buttons_event();
@@ -268,6 +268,7 @@ static uint8_t wait_carrier(uint8_t *why) {
       }
       else if(!waited || since(t_bad) >= CARRIER_ON_MS) break;
       show_power(pwr_x10(m.pf));
+      disp_flush();
       if(hal_abort()) { r = TUNE_ABORTED; break; }
       if(p != P_OK) {                          // a carrier on its way: the hint stays
          if(since(t) >= CARRIER_MS) {
@@ -298,10 +299,11 @@ static void do_tune(uint8_t by_auto) {
    char tunestr[10] = "TUNE      ";
    relays_t from = rel;
    icom_interface_tuning(1);
-   tunestr[5] = (icom_interface_active() && ICOM_START) ? '*' : ' ';
+   tunestr[4] = (icom_interface_active() && ICOM_START) ? '*' : ' ';
    msg_on = 0;
    disp_med(LINE2, 0, tunestr);                 // the SWR so far follows at the right
    shown_swr = 0xFFFF;                         // blanked: draw it even if unchanged
+   disp_flush();
    r = wait_carrier(&why);
    if(r == TUNE_OK) {
       tune_resume = (resume == RESUME_ANY || (resume == RESUME_TUNE && !by_auto))
@@ -351,6 +353,7 @@ static void do_tune(uint8_t by_auto) {
    else if(r == TUNE_NO_MATCH) message("NO MATCH", 2000);
    else if(r == TUNE_ABORTED) message("STOP", 1000);
    else if(r == TUNE_OVERLOAD) message("OVERLOAD", 2000);
+   disp_refresh();                             // RF may have garbled the picture
    icom_interface_tuning(0);
    auto_cnt = 0;
    t_active = t_tuned = tick_ms();
@@ -459,6 +462,7 @@ static void greeting(void) {
    disp_big(27, CENTRE_BIG(GREET_FW), GREET_FW);
    disp_small(46, CENTRE_SMALL("FIRMWARE BY DL8UG"), "FIRMWARE BY DL8UG");
    disp_small(58, CENTRE_SMALL("PORT BY N1GP"), "PORT BY N1GP");
+   disp_flush();
    delay_ms(2500);
 }
 
@@ -525,8 +529,8 @@ static void show(void) {
 // ---------------------------------------------------------------- main
 void main(void) {
    uint8_t ev;
-   // Keep all pins in safe high-impedance input state during ICSP verification gaps
-   board_init();
+   ICOM_KEY_DRIVE(1);
+   hal_init();
    i2c_init();
    settings_load();
    interface_init();
@@ -545,6 +549,7 @@ void main(void) {
    }
    swr_ref = st.last_swr ? (uint16_t)(100 + st.last_swr) : 0;
    start_screen();
+   WDT_ON();
    t_watch = t_show = t_refresh = tick_ms();
    extern uart_command_result_t uart_command;
 
@@ -577,8 +582,8 @@ void main(void) {
                if(set_cap_side(1)) relay_setting_changed();
                uart_reply_relay_mask(1); break;
             case UART_COMMAND_CAP_SOURCE:
-            if(set_cap_side(0)) relay_setting_changed();
-            uart_reply_relay_mask(0); break;
+               if(set_cap_side(0)) relay_setting_changed();
+               uart_reply_relay_mask(0); break;
             case UART_COMMAND_CAP_POSITION_QUERY: uart_reply_cap_position(); break;
             case UART_COMMAND_SWR_QUERY:     uart_reply_decimal(swr_live); break;
             case UART_COMMAND_LAST_SWR_QUERY:
@@ -610,6 +615,7 @@ void main(void) {
          case EV_EXT_SHORT: bypass_toggle(1); break;
          case EV_EXT_LONG:  do_tune(0); break;
       }
+
       if(since(t_watch) >= WATCH_MS) {
          t_watch = tick_ms();
          watch();
@@ -625,6 +631,8 @@ void main(void) {
       if(msg_on && (int16_t)(tick_ms() - t_msg) >= 0) message_end();
       if(since(t_refresh) >= REFRESH_MS) {
          t_refresh = tick_ms();
+         disp_refresh();
       }
+      disp_service();
    }
 }

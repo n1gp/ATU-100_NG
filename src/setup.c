@@ -7,7 +7,7 @@
 // On SAVE / HEX VALUES / EXIT a short press does it. Without a press for
 // 60 s the menu ends without saving.
 
-#include "board.h"
+#include "hal.h"
 #include "timer.h"
 #include "cells.h"
 #include "settings.h"
@@ -25,11 +25,6 @@ static const char *const names[CELL_COUNT] = {
    "RELAY PULSE", "MIN. TUNE POWER", "MAX. TUNE POWER", "AUTO TUNE: SWR CHANGE",
    "AUTO TUNE", "CALIBRATION B (1 W)", "CALIBRATION A (100 W)", "POWER PEAK HOLD",
    "TUNE TARGET SWR", "SEARCH EFFORT", "TURNS RATIO", "OLED OFFSET X", "OLED OFFSET Y", "EXT INTERFACE"
-};
-
-static const uint8_t units[CELL_COUNT] = {
-   U_MS, U_W10, U_W, U_DSWR, U_ONOFF, U_DIV10, U_CALA, U_X10MS, U_TARGET, U_EFFORT,
-   U_TURNS, U_OLEDOFFX, U_OLEDOFFY, U_INTERFACE
 };
 
 // values offered per setting, ascending (other values from the hex file

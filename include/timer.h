@@ -11,6 +11,10 @@ extern volatile uint8_t btn_tune_held, btn_auto_held, btn_byp_held;
 // length of the last finished press in 10 ms units, 0 = none pending
 extern volatile uint8_t btn_tune_released, btn_auto_released, btn_byp_released;
 
-uint16_t tick_ms(void);
+extern volatile uint8_t tx_shift;
+extern volatile uint8_t tx_bits_left;
+extern volatile uint8_t tx_subtick;
+
+uint16_t tick_ms(void);                  // read atomically
 
 #endif

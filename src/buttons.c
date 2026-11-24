@@ -1,4 +1,4 @@
-#include "board.h"
+#include "hal.h"
 #include "timer.h"
 #include "buttons.h"
 
@@ -23,7 +23,7 @@ void buttons_clear(void) {
 }
 
 uint8_t buttons_event(void) {
-   uint8_t ht, relt, ha, rela, hb, relb, eh, erel, ev;
+   uint8_t ht, relt, rela, relb, ev;
    if(pending) {
       ev = pending;
       pending = EV_NONE;
@@ -33,10 +33,8 @@ uint8_t buttons_event(void) {
    ht = btn_tune_held;
    relt = btn_tune_released;
    btn_tune_released = 0;
-   ha = btn_auto_held;
    rela = btn_auto_released;
    btn_auto_released = 0;
-   hb = btn_byp_held;
    relb = btn_byp_released;
    btn_byp_released = 0;
    INTCONbits.GIE = 1;

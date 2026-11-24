@@ -1,7 +1,7 @@
 #ifndef UART_H
 #define UART_H
 
-#include "board.h"
+#include "hal.h"
 
 typedef uint32_t uart_command_t;
 
@@ -21,10 +21,17 @@ extern uart_command_result_t uart_command;
 //#define ENABLE_EUSART 1
 
 #ifndef ENABLE_EUSART
-void bitbang_uart_isr(void);
-#else
-// Empty macro so timer.c compiles cleanly without #ifdef clutter
-#define bitbang_uart_isr() ((void)0)
+//RRK change back to A6 & A7
+#define UART_TX_LAT   LATCbits.LATC6
+#define UART_TX_TRIS  TRISCbits.TRISC6
+#define UART_RX_PORT  PORTCbits.RC7
+#define UART_RX_TRIS  TRISCbits.TRISC7
+
+#define BB_FIFO_SIZE 8
+#define BB_FIFO_MASK (BB_FIFO_SIZE - 1)
+extern volatile uint8_t bb_fifo[BB_FIFO_SIZE];
+extern volatile uint8_t bb_head;
+extern volatile uint8_t bb_tail;
 #endif
 
 void UART_init(void);

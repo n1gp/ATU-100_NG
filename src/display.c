@@ -1,4 +1,4 @@
-#include "board.h"
+#include "hal.h"
 #include "display.h"
 #include "oled.h"
 #include "i2c_soft.h"
@@ -7,6 +7,10 @@
 
 #define W      128
 #define PAGES  8
+
+void disp_service(void){};
+void disp_flush(void){};
+void disp_refresh(void){};
 
 // removed most lowercase from font5x8.h to save space
 static const uint8_t *glyph(char ch) {
@@ -73,17 +77,6 @@ void disp_big(uint8_t y, uint8_t x, const char *s) {
    }
 }
 
-static uint16_t stretch12(uint8_t b) {
-   uint16_t r = 0;
-   uint8_t i;
-   for (i = 0; i < 4; i++, b >>= 2) {
-      r >>= 3;
-      if (b & 1) r |= 0x0600;
-      if (b & 2) r |= 0x0800;
-   }
-   return r;
-}
-
 // Bold 6x8 text: sends 7 columns in 1 burst per character
 void disp_bold(uint8_t y, uint8_t x, const char *s) {
    uint8_t p = y >> 3;
@@ -98,6 +91,18 @@ void disp_bold(uint8_t y, uint8_t x, const char *s) {
       buf[6] = 0;
       oled_write(p, x, buf, 7);
    }
+}
+
+// Stretches an 8-bit glyph column into 12 vertical pixels (1.5x vertical scale)
+static uint16_t stretch12(uint8_t b) {
+   uint16_t r = 0;
+   uint8_t i;
+   for (i = 0; i < 4; i++, b >>= 2) {
+      r >>= 3;
+      if (b & 1) r |= 0x0600;
+      if (b & 2) r |= 0x0800;
+   }
+   return r;
 }
 
 void disp_med(uint8_t y, uint8_t x, const char *s) {

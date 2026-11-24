@@ -1,5 +1,8 @@
 #include "nvm.h"
+#include "hal.h"
+#ifdef __XC8
 #include <xc.h>
+#endif
 
 state_t st;
 
@@ -13,34 +16,6 @@ state_t st;
 #define MEM_SIZE    5
 
 static uint8_t ring_slot, ring_seq;
-
-uint8_t nvm_read(uint8_t a) {
-   while(EECON1bits.WR) continue;
-   EEADRL = a;
-   EECON1bits.CFGS = 0;       // Access EEPROM/Flash (not Config)
-   EECON1bits.EEPGD = 0;      // Access Data EEPROM (not Program Flash)
-   EECON1bits.RD = 1;
-   return EEDATL;
-}
-
-void nvm_write(uint8_t a, uint8_t v) {
-   uint8_t gie;
-   if(nvm_read(a) == v) return;
-   while (EECON1bits.WR) continue;
-   EEADRL = a;
-   EEDATL = v;
-   EECON1bits.CFGS = 0;
-   EECON1bits.EEPGD = 0;
-   EECON1bits.WREN = 1;
-   gie = INTCONbits.GIE;
-   INTCONbits.GIE = 0;
-   EECON2 = 0x55;
-   EECON2 = 0xAA;
-   EECON1bits.WR = 1;
-   while (EECON1bits.WR) CLRWDT();
-   EECON1bits.WREN = 0;
-   INTCONbits.GIE = gie;
-}
 
 // CRC-8 (polynomial 0x07); never 0 / 0xFF for erased cells in practice
 uint8_t crc8(const uint8_t *p, uint8_t n) {

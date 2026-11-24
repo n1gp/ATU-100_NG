@@ -1,4 +1,4 @@
-#include "board.h"
+#include "hal.h"
 #include "i2c_soft.h"
 
 #define HALF() __delay_us(2)

@@ -23,7 +23,7 @@ const volatile uint8_t Cells[CELLS_SIZE] __at(CELLS_ADDR) = {
    0x10,   // 11 tandem turns ratio of 10
    0x00,   // 12 offset rows to the left (horizontally move) for OLED displays
    0x00,   // 13 offset down (vertically move) for OLED displays
-   0x01,   // 14 external interface: ICOM (default)
+   0x01,   // 14 external interface: UART (default)
 };
 
 uint8_t cell_decode(uint8_t i, uint8_t bcd) {

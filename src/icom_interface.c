@@ -1,4 +1,4 @@
-#include "board.h"
+#include "hal.h"
 #include "buttons.h"
 #include "icom_interface.h"
 
@@ -8,18 +8,6 @@
 
 static volatile uint8_t active, ext_held, ext_released;
 static uint8_t ext_long_sent, pending;
-
-#ifdef ENABLE_EUSART
-#define ICOM_KEY_DRIVE(high_z) do { \
-    LATCbits.LATC7 = 0; \
-    TRISCbits.TRISC7 = (high_z) ? 1 : 0; \
-} while (0)
-#else
-#define ICOM_KEY_DRIVE(high_z) do { \
-    LATAbits.LATA7 = 0; \
-    TRISAbits.TRISA7 = (high_z) ? 1 : 0; \
-} while (0)
-#endif
 
 uint8_t icom_interface_active(void) {
     return active;
@@ -34,12 +22,25 @@ void icom_interface_init(void) {
     TXSTAbits.TXEN = 0;
     RCSTAbits.CREN = 0;
 
+#ifdef __16F18857
+#ifdef ENABLE_EUSART
+   ODCONCbits.ODCC7 = 1;
+   TRISCbits.TRISC6 = 1;
+   TRISCbits.TRISC7 = 0;
+#else //RRK change me
+   ODCONCbits.ODCC7 = 1;
+   TRISCbits.TRISC6 = 1;
+   TRISCbits.TRISC7 = 0;
+#endif
+   ICOM_KEY_OUT = 1;
+#else //__16F1938
 #ifdef ENABLE_EUSART
     TRISCbits.TRISC6 = 1;
 #else
     TRISAbits.TRISA6 = 1;
 #endif
     ICOM_KEY_DRIVE(1);      // Release KEY line (Hi-Z)
+#endif
 
     active = 1;
     ext_held = ext_released = 0;
@@ -57,7 +58,11 @@ void icom_interface_suspend(void) {
     ext_held = ext_released = 0;
     ext_long_sent = 1;
     pending = EV_NONE;
-    ICOM_KEY_DRIVE(1);      // Release KEY line (Hi-Z)
+#ifdef __16F18857
+    ICOM_KEY_OUT = 1;
+#else
+    ICOM_KEY_DRIVE(1);
+#endif
 
     INTCONbits.GIE = gie;
 }
@@ -112,6 +117,6 @@ uint8_t icom_interface_event(void) {
 
 void icom_interface_tuning(uint8_t tuning) {
     if (active) {
-        ICOM_KEY_DRIVE(tuning ? 0 : 1); // 0 = pull KEY low, 1 = release Hi-Z
+       ICOM_KEY_OUT = tuning ? 0 : 1;
     }
 }

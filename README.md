@@ -1,6 +1,9 @@
 # ATU-100 NG – new firmware for the ATU-100 antenna tuner
+This build now includes the PIC16F18857. That PIC allows
+the 256 cache entries since it has more memory.
+
 This project was put together by porting the ATU-10_NG project
-from a PIC16LF18877 to a PIC16F1983 to take advantage of
+from a PIC16LF18877 to a PIC16F1938 to take advantage of
 DL8UG's very nice tuning algorithms but keeping the original
 component connections to the PIC.
 

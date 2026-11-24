@@ -12,6 +12,14 @@ static inline uint32_t POWER_UW(uint32_t v) {
     return (((v * v) >> 10) * (uint32_t)(100u + cfg[CFG_CAL_A]) * 14u) / 25u;
 }
 
+#if 0 // from __16F18857
+// Verified 5:1 tandem constants: quadratic scale = 15u, linear scale = 1u
+// Matching 10:1 tandem constants: quadratic scale = 60u (4x), linear scale = 2u (2x)
+#define POWER_UW(v) ( \
+    ((((uint32_t)(v) * (v)) >> 10) * (cfg[CFG_TURNS] == 5 ? 15u : 60u) / 25u) * (uint32_t)(100 + cfg[CFG_CAL_A]) \
+    + ((uint32_t)(v) * cfg[CFG_CAL_B] * (cfg[CFG_TURNS] == 5 ? 25u : 50u)) / 2u )
+#endif
+
 // Pr / Pf as a 24 bit binary fraction, by long division: exact without
 // 64 bit arithmetic (Pf < 2^27, so the remainder never overflows)
 uint32_t g2_calc(uint32_t pf, uint32_t pr) {

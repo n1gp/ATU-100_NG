@@ -1,7 +1,7 @@
 // The display initialization sequence follows the ATU-10 firmware by
 // David Fainitski, N7DDC (public domain).
 
-#include "board.h"
+#include "hal.h"
 #include "i2c_soft.h"
 #include "cells.h"
 #include "oled.h"

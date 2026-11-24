@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include "meas_math.h"
 
-void meas_init(void);
 // Full measurement: F1 R1 R2 F2, each the average of n samples (n <= 64)
 void meas_take(meas_t *m, uint8_t n);
+extern uint8_t ref_now;
 
 #endif

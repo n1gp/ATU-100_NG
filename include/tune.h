@@ -93,7 +93,6 @@ extern uint16_t tune_swr;          // SWR x 100 reached
 // QUICK_MARGIN worse than when that setting was found.
 uint8_t tune_run(const relays_t *from, uint16_t last_swr);
 
-// Provided by the firmware or the simulator
 #define hal_relay_set relays_set
 #define hal_sample    meas_take
 #define hal_wait_ms   delay_ms

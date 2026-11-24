@@ -129,7 +129,13 @@ static uint8_t phase;
 // ---- measurement cache, open addressing; when full, new settings are
 // measured but not stored. g2 is kept with 16 bits (g2 / 256: resolution
 // SWR 1.008, below the measurement noise) to fit 256 entries in 1.3 kB.
-#define CACHE_SIZE 64 // was 256
+#ifdef __16F18857
+#define CACHE_SIZE 256
+typedef uint16_t cache_idx_t;
+#else
+#define CACHE_SIZE 64
+typedef uint8_t cache_idx_t;
+#endif
 #define CACHE_MASK (CACHE_SIZE - 1u)
 
 static uint16_t cache_key[CACHE_SIZE];       // 0 = empty, 1 = dropped, else 0x8000 | sw << 14 | l << 7 | c
@@ -470,12 +476,17 @@ static void remember(void) {
 
 uint8_t tune_run(const relays_t *from, uint16_t last_swr) {
    const uint8_t *grid;
-   uint8_t ng, k, sw, i, j, a, b, r, n_cand = 0, n_res = 0;
+   uint8_t ng, k, sw, j, a, b, r, n_cand = 0, n_res = 0;
    relays_t cand[CAND_MAX], res[2], p;
    val_t cv[CAND_MAX], rv[2], v, vb;
-   uint8_t gi[CAND_MAX], gj[CAND_MAX], cont = 0;
+   cache_idx_t gi[CAND_MAX], gj[CAND_MAX], cont = 0;
    uint16_t ref_swr, steps0, key;
    uint32_t d, lo, hi;
+#if CACHE_SIZE > 255
+    uint16_t i;
+#else
+    uint8_t i;
+#endif
 
    tune_resumable = 0;
    carrier_seen = 0;
